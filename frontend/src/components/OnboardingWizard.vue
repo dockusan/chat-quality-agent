@@ -8,8 +8,8 @@
     <template #prepend>
       <v-icon>mdi-rocket-launch</v-icon>
     </template>
-    <div class="d-flex align-center ga-2" style="overflow-x: auto; flex-wrap: nowrap;">
-      <span class="text-body-2 font-weight-medium mr-2">Bắt đầu sử dụng:</span>
+    <div class="onboarding-steps d-flex align-center ga-2">
+      <span class="text-body-2 font-weight-medium mr-2" style="white-space: nowrap;">Bắt đầu sử dụng:</span>
       <v-chip
         v-for="step in steps"
         :key="step.key"
@@ -100,3 +100,18 @@ async function dismiss() {
   } catch { /* ignore */ }
 }
 </script>
+
+<style scoped>
+.onboarding-steps {
+  overflow-x: auto;
+  flex-wrap: nowrap;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.onboarding-steps::-webkit-scrollbar {
+  display: none;
+}
+.onboarding-banner :deep(.v-banner__content) {
+  overflow: visible;
+}
+</style>

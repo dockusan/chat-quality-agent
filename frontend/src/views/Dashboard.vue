@@ -2,12 +2,10 @@
   <div>
     <!-- Demo Import Banner -->
     <v-alert v-if="demoStatus && !demoStatus.has_data" type="info" variant="tonal" class="mb-4" prominent>
-      <div class="d-flex align-center">
-        <div class="flex-grow-1">
-          <div class="text-subtitle-1 font-weight-bold mb-1">Chào mừng! Bắt đầu với dữ liệu demo</div>
-          <div class="text-body-2">Hệ thống chưa có dữ liệu. Nhập dữ liệu demo để trải nghiệm ngay cách AI đánh giá chất lượng CSKH và phân loại cuộc chat tự động. Dữ liệu giả lập ~220 cuộc chat từ SePay Coffee.</div>
-        </div>
-        <v-btn color="primary" variant="flat" class="ml-4" :loading="importingDemo" @click="importDemo">
+      <div>
+        <div class="text-subtitle-1 font-weight-bold mb-1">Chào mừng! Bắt đầu với dữ liệu demo</div>
+        <div class="text-body-2 mb-3">Hệ thống chưa có dữ liệu. Nhập dữ liệu demo để trải nghiệm ngay cách AI đánh giá chất lượng CSKH và phân loại cuộc chat tự động. Dữ liệu giả lập ~220 cuộc chat từ SePay Coffee.</div>
+        <v-btn color="primary" variant="flat" :loading="importingDemo" @click="importDemo">
           <v-icon start>mdi-database-import</v-icon>
           Nhập dữ liệu demo
         </v-btn>
@@ -44,16 +42,16 @@
       </v-card>
     </v-dialog>
 
-    <div class="d-flex align-center mb-6">
-      <h1 class="text-h5 font-weight-bold">{{ $t('dashboard') }}</h1>
-      <v-spacer />
-      <v-chip-group v-model="datePreset" class="mr-3">
+    <div class="d-flex flex-wrap align-center mb-4 ga-2">
+      <h1 class="text-h5 font-weight-bold d-none d-md-block">{{ $t('dashboard') }}</h1>
+      <v-spacer class="d-none d-md-block" />
+      <v-chip-group v-model="datePreset">
         <v-chip v-for="p in datePresets" :key="p.value" :value="p.value" size="small" variant="outlined" @click="applyPreset(p.value)">
           {{ p.label }}
         </v-chip>
       </v-chip-group>
-      <v-text-field v-model="dateFrom" type="date" density="compact" hide-details style="max-width: 160px" class="mr-2" @change="loadDashboard" />
-      <v-text-field v-model="dateTo" type="date" density="compact" hide-details style="max-width: 160px" @change="loadDashboard" />
+      <v-text-field v-model="dateFrom" type="date" density="compact" hide-details style="max-width: 150px" @change="loadDashboard" />
+      <v-text-field v-model="dateTo" type="date" density="compact" hide-details style="max-width: 150px" @change="loadDashboard" />
     </div>
 
     <!-- Stat cards -->

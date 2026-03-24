@@ -6,7 +6,7 @@
 
     <v-row>
       <!-- Conversation List -->
-      <v-col cols="12" :md="selectedConvId ? 5 : 12" :lg="selectedConvId ? 4 : 12">
+      <v-col v-if="mdAndUp || !selectedConvId" cols="12" :md="selectedConvId ? 5 : 12" :lg="selectedConvId ? 4 : 12">
         <!-- Filters -->
         <v-card class="mb-4" variant="outlined">
           <v-card-text class="pa-3">
@@ -348,11 +348,13 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
+import { useDisplay } from 'vuetify'
 import { useConversationStore, type Message } from '../stores/conversations'
 import { useChannelStore } from '../stores/channels'
 import api from '../api'
 
 const route = useRoute()
+const { mdAndUp } = useDisplay()
 const conversationStore = useConversationStore()
 const channelStore = useChannelStore()
 
@@ -713,7 +715,9 @@ onUnmounted(() => {
 })
 
 function isImageAttachment(att: any): boolean {
-  return att.type && (att.type.startsWith('image') || att.type === 'image')
+  if (!att.type) return false
+  const t = att.type.toLowerCase()
+  return t.startsWith('image') || t === 'photo' || t === 'gif' || t === 'sticker'
 }
 
 function onImageError(event: Event, att: any) {

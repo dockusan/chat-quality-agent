@@ -1,14 +1,15 @@
 <template>
   <div>
     <!-- Header -->
-    <div class="d-flex align-center mb-2 flex-wrap ga-2">
+    <div class="d-flex align-center mb-2">
       <v-btn icon="mdi-arrow-left" variant="text" :to="`/${tenantId}/jobs`" />
-      <h1 class="text-h5 font-weight-bold ml-2">{{ job?.name || '...' }}</h1>
-      <v-spacer />
-      <v-btn variant="outlined" prepend-icon="mdi-pencil" size="small" :to="`/${tenantId}/jobs/${jobId}/edit`" class="mr-2">
+      <h1 class="text-h6 text-md-h5 font-weight-bold ml-2 flex-grow-1" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ job?.name || '...' }}</h1>
+    </div>
+    <div class="d-flex flex-wrap ga-2 mb-2 ml-12">
+      <v-btn variant="outlined" prepend-icon="mdi-pencil" size="small" :to="`/${tenantId}/jobs/${jobId}/edit`">
         {{ $t('edit') }}
       </v-btn>
-      <v-btn variant="outlined" color="primary" prepend-icon="mdi-test-tube" size="small" :loading="testRunning" class="mr-2" @click="testRun">
+      <v-btn variant="outlined" color="primary" prepend-icon="mdi-test-tube" size="small" :loading="testRunning" @click="testRun">
         Chạy thử (3 hội thoại)
       </v-btn>
       <v-btn color="primary" prepend-icon="mdi-play" size="small" :loading="triggerRunning" @click="openRunDialog">
