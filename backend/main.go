@@ -4,6 +4,7 @@ import (
 	"log"
 
 	"github.com/vietbui/chat-quality-agent/api"
+	"github.com/vietbui/chat-quality-agent/api/handlers"
 	"github.com/vietbui/chat-quality-agent/api/middleware"
 	"github.com/vietbui/chat-quality-agent/config"
 	"github.com/vietbui/chat-quality-agent/db"
@@ -14,6 +15,7 @@ var version = "dev"
 
 func main() {
 	log.Printf("Chat Quality Agent %s", version)
+	handlers.AppVersion = version
 
 	// Load config
 	cfg, err := config.Load()

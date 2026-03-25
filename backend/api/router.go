@@ -85,12 +85,15 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 
 	// Health check
 	r.GET("/health", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{"status": "ok"})
+		c.JSON(http.StatusOK, gin.H{"status": "ok", "version": handlers.AppVersion})
 	})
 
 	// Public API
 	api := r.Group("/api/v1")
 	{
+		// Version check (public, no auth required)
+		api.GET("/version/check", handlers.CheckVersion)
+
 		// Initial setup (only works when no users exist)
 		api.GET("/setup/status", handlers.SetupStatus)
 		api.POST("/setup", handlers.Setup)

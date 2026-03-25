@@ -128,6 +128,36 @@
   <v-main class="bg-background">
     <v-container fluid class="pa-4 pa-md-6">
       <OnboardingWizard />
+
+      <!-- Update notification banner -->
+      <v-alert
+        v-if="updateInfo && updateInfo.has_update && !isUpdateDismissed"
+        type="info"
+        variant="tonal"
+        class="mb-4"
+        closable
+        @click:close="dismissUpdate"
+      >
+        <div class="d-flex align-center flex-wrap ga-2">
+          <div class="flex-grow-1">
+            <div class="text-subtitle-2 font-weight-bold">
+              Phien ban moi: {{ updateInfo.latest }}
+            </div>
+            <div v-if="updateInfo.release_notes" class="text-body-2 mt-1" style="white-space: pre-line; max-height: 80px; overflow: hidden;">{{ updateInfo.release_notes }}</div>
+            <div class="text-caption text-grey mt-1">
+              Phien ban hien tai: {{ updateInfo.current }}
+            </div>
+          </div>
+          <div class="d-flex flex-column ga-1">
+            <v-btn size="small" variant="tonal" color="primary" :href="updateInfo.release_url" target="_blank" prepend-icon="mdi-open-in-new">Xem chi tiet</v-btn>
+          </div>
+        </div>
+        <div class="text-caption mt-2 text-grey-darken-1">
+          <a href="https://tanviet12.github.io/chat-quality-agent/guide/installation.html#tu-dong-cap-nhat-tuy-chon" target="_blank" class="text-primary">Cai Watchtower</a> de tu dong cap nhat, hoac chay:
+          <code class="text-caption">cd /opt/cqa && docker compose pull && docker compose up -d</code>
+        </div>
+      </v-alert>
+
       <slot />
     </v-container>
   </v-main>
@@ -207,7 +237,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { clearTenantCache } from '../router'
 import { useTheme, useDisplay } from 'vuetify'
@@ -314,6 +344,31 @@ const snackColor = ref('success')
 
 const profileForm = ref({ name: '' })
 const passwordForm = ref({ currentPassword: '', newPassword: '', confirmPassword: '' })
+
+// Version update check
+const updateInfo = ref<any>(null)
+const isUpdateDismissed = computed(() => {
+  if (!updateInfo.value?.latest) return true
+  return localStorage.getItem('cqa_dismissed_version') === updateInfo.value.latest
+})
+function dismissUpdate() {
+  if (updateInfo.value?.latest) localStorage.setItem('cqa_dismissed_version', updateInfo.value.latest)
+}
+onMounted(async () => {
+  // Check cached version info (max 1 hour)
+  const cached = localStorage.getItem('cqa_version_check')
+  if (cached) {
+    try {
+      const { data, ts } = JSON.parse(cached)
+      if (Date.now() - ts < 3600000) { updateInfo.value = data; return }
+    } catch { /* ignore */ }
+  }
+  try {
+    const { data } = await api.get('/version/check')
+    updateInfo.value = data
+    localStorage.setItem('cqa_version_check', JSON.stringify({ data, ts: Date.now() }))
+  } catch { /* ignore */ }
+})
 
 // Load profile data when dialog opens
 watch(profileDialog, (val) => {
