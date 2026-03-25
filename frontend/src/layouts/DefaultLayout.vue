@@ -140,21 +140,16 @@
       >
         <div class="d-flex align-center flex-wrap ga-2">
           <div class="flex-grow-1">
-            <div class="text-subtitle-2 font-weight-bold">
-              Phiên bản mới: {{ updateInfo.latest }}
-            </div>
-            <div class="text-caption text-grey mt-1">
-              Phiên bản hiện tại: {{ updateInfo.current }}
-            </div>
-          </div>
-          <div class="d-flex ga-1">
-            <v-btn size="small" variant="tonal" color="primary" href="https://tanviet12.github.io/chat-quality-agent/changelog.html" target="_blank" prepend-icon="mdi-format-list-bulleted">Changelog</v-btn>
-            <v-btn size="small" variant="tonal" color="primary" :href="updateInfo.release_url" target="_blank" prepend-icon="mdi-open-in-new">Chi tiết</v-btn>
+            <span class="text-subtitle-2 font-weight-bold">Phiên bản mới: <a :href="'https://tanviet12.github.io/chat-quality-agent/changelog.html'" target="_blank" class="text-primary">{{ updateInfo.latest }}</a></span>
+            <span class="text-caption text-grey ml-2">| Hiện tại: {{ updateInfo.current }}</span>
           </div>
         </div>
-        <div class="text-caption mt-2 text-grey-darken-1">
-          <a href="https://tanviet12.github.io/chat-quality-agent/guide/installation.html#tu-%C4%91ong-cap-nhat-tuy-chon" target="_blank" class="text-primary">Cài Watchtower</a> để tự động cập nhật, hoặc chạy:
-          <code class="text-caption">cd /opt/cqa && docker compose pull && docker compose up -d</code>
+        <div class="d-flex align-center mt-2 ga-2">
+          <code class="text-caption pa-1 bg-grey-lighten-4 rounded" style="user-select: all;">cd /opt/cqa && docker compose pull && docker compose up -d</code>
+          <v-btn icon="mdi-content-copy" size="x-small" variant="text" @click="copyUpdateCmd" />
+        </div>
+        <div class="text-caption mt-1 text-grey-darken-1">
+          <a href="https://tanviet12.github.io/chat-quality-agent/guide/installation.html#tu-%C4%91ong-cap-nhat-tuy-chon" target="_blank" class="text-primary">Cài Watchtower</a> để tự động cập nhật.
         </div>
       </v-alert>
 
@@ -353,6 +348,9 @@ const isUpdateDismissed = computed(() => {
 })
 function dismissUpdate() {
   if (updateInfo.value?.latest) localStorage.setItem('cqa_dismissed_version', updateInfo.value.latest)
+}
+function copyUpdateCmd() {
+  navigator.clipboard.writeText('cd /opt/cqa && docker compose pull && docker compose up -d')
 }
 onMounted(async () => {
   // Check cached version info (max 1 hour)
