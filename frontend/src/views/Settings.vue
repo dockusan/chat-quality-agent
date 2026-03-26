@@ -55,6 +55,7 @@
           <v-switch
             v-model="useCustomBaseUrl"
             label="Tùy chỉnh API URL"
+            color="primary"
             density="compact"
             hide-details
             class="mt-1 mb-2"
