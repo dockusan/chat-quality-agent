@@ -70,7 +70,10 @@
             hint="Để trống để dùng mặc định"
             persistent-hint
             clearable
-            :rules="[v => !v || v.startsWith('http://') || v.startsWith('https://') || 'URL phải bắt đầu bằng http:// hoặc https://']"
+            :rules="[
+              v => !!v || 'Vui lòng nhập URL hoặc tắt tùy chỉnh',
+              v => !v || v.startsWith('http://') || v.startsWith('https://') || 'URL phải bắt đầu bằng http:// hoặc https://',
+            ]"
             class="mb-3"
           />
 
@@ -260,6 +263,10 @@ async function saveAnalysis() {
 async function saveAI() {
   if (!aiSettings.apiKey || aiSettings.apiKey === '••••••••') {
     showSnack('Vui lòng nhập API Key', 'error')
+    return
+  }
+  if (useCustomBaseUrl.value && !aiSettings.baseUrl) {
+    showSnack('Vui lòng nhập Base URL hoặc tắt tùy chỉnh', 'error')
     return
   }
   savingAI.value = true
