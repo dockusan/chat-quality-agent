@@ -43,6 +43,17 @@ docker compose up -d --build
 
 Truy cập: **http://your-server-ip** (hoặc `http://localhost` nếu cài trên máy local) — Lần đầu sẽ hiện trang Setup để tạo tài khoản admin.
 
+### Deploy trên Railway
+
+Repo này đã hỗ trợ Railway runtime:
+
+- tự bind theo `PORT`
+- tự nhận biến MySQL của Railway (`MYSQLHOST`, `MYSQLPORT`, `MYSQLUSER`, `MYSQLPASSWORD`, `MYSQLDATABASE`)
+- tự nhận public URL từ `RAILWAY_PUBLIC_DOMAIN`
+- hỗ trợ volume qua `RAILWAY_VOLUME_MOUNT_PATH`
+
+Xem hướng dẫn chi tiết tại [`docs/guide/railway.md`](docs/guide/railway.md).
+
 ### Bật SSL (tùy chọn)
 
 Thêm vào file `.env`:

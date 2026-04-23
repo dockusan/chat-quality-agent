@@ -3,13 +3,16 @@ package config
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"strconv"
+	"strings"
 )
 
 type Config struct {
 	// Server
 	ServerPort string
 	ServerHost string
+	AppURL     string
 
 	// Database
 	DBHost     string
@@ -31,23 +34,28 @@ type Config struct {
 
 	// Environment
 	Env string // "development" | "production"
+
+	// Storage
+	FileStoragePath string
 }
 
 func Load() (*Config, error) {
 	cfg := &Config{
-		ServerPort:       getEnv("SERVER_PORT", "8080"),
-		ServerHost:       getEnv("SERVER_HOST", "127.0.0.1"),
-		DBHost:           getEnv("DB_HOST", "localhost"),
-		DBPort:           getEnv("DB_PORT", "3306"),
-		DBUser:           getEnv("DB_USER", "cqa"),
-		DBPassword:       getEnv("DB_PASSWORD", ""),
-		DBName:           getEnv("DB_NAME", "cqa"),
+		ServerPort:       getEnvFirst([]string{"SERVER_PORT", "PORT"}, "8080"),
+		ServerHost:       getEnv("SERVER_HOST", "0.0.0.0"),
+		AppURL:           GetAppURL(),
+		DBHost:           getEnvFirst([]string{"DB_HOST", "MYSQLHOST"}, "localhost"),
+		DBPort:           getEnvFirst([]string{"DB_PORT", "MYSQLPORT"}, "3306"),
+		DBUser:           getEnvFirst([]string{"DB_USER", "MYSQLUSER"}, "cqa"),
+		DBPassword:       getEnvFirst([]string{"DB_PASSWORD", "MYSQLPASSWORD"}, ""),
+		DBName:           getEnvFirst([]string{"DB_NAME", "MYSQLDATABASE"}, "cqa"),
 		JWTSecret:        getEnv("JWT_SECRET", ""),
 		EncryptionKey:    getEnv("ENCRYPTION_KEY", ""),
 		RateLimitPerIP:   getEnvInt("RATE_LIMIT_PER_IP", 500),
 		RateLimitPerUser: getEnvInt("RATE_LIMIT_PER_USER", 1000),
 		AIMaxTokens:      getEnvInt("AI_MAX_TOKENS", 16384),
 		Env:              getEnv("APP_ENV", "development"),
+		FileStoragePath:  GetFileStoragePath(),
 	}
 
 	if cfg.JWTSecret == "" {
@@ -89,6 +97,15 @@ func getEnv(key, fallback string) string {
 	return fallback
 }
 
+func getEnvFirst(keys []string, fallback string) string {
+	for _, key := range keys {
+		if v := strings.TrimSpace(os.Getenv(key)); v != "" {
+			return v
+		}
+	}
+	return fallback
+}
+
 func getEnvInt(key string, fallback int) int {
 	if v := os.Getenv(key); v != "" {
 		if i, err := strconv.Atoi(v); err == nil {
@@ -96,4 +113,27 @@ func getEnvInt(key string, fallback int) int {
 		}
 	}
 	return fallback
+}
+
+func GetAppURL() string {
+	if v := strings.TrimSpace(os.Getenv("APP_URL")); v != "" {
+		return strings.TrimRight(v, "/")
+	}
+
+	if domain := strings.TrimSpace(os.Getenv("RAILWAY_PUBLIC_DOMAIN")); domain != "" {
+		domain = strings.TrimPrefix(domain, "https://")
+		domain = strings.TrimPrefix(domain, "http://")
+		return "https://" + strings.TrimRight(domain, "/")
+	}
+
+	return ""
+}
+
+func GetFileStoragePath() string {
+	basePath := getEnvFirst([]string{"FILE_STORAGE_PATH", "RAILWAY_VOLUME_MOUNT_PATH"}, "/var/lib/cqa/files")
+	cleaned := filepath.Clean(strings.TrimSpace(basePath))
+	if cleaned == "." || cleaned == "" {
+		return "/var/lib/cqa/files"
+	}
+	return cleaned
 }

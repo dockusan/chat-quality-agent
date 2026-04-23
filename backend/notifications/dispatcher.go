@@ -5,9 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"os"
 	"time"
 
+	"github.com/vietbui/chat-quality-agent/config"
 	"github.com/vietbui/chat-quality-agent/db"
 	"github.com/vietbui/chat-quality-agent/db/models"
 	"github.com/vietbui/chat-quality-agent/pkg"
@@ -204,7 +204,7 @@ func (d *Dispatcher) getBaseURL(tenantID string) string {
 		return setting.ValuePlain
 	}
 	// Priority 2: environment variable
-	if u := os.Getenv("APP_URL"); u != "" {
+	if u := config.GetAppURL(); u != "" {
 		return u
 	}
 	// Priority 3: fallback

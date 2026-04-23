@@ -43,15 +43,18 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 	// Serve uploaded files (requires JWT auth + tenant ownership)
 	r.GET("/api/v1/files/*filepath", middleware.JWTAuth(), func(c *gin.Context) {
 		fp := c.Param("filepath")
+		baseDir := cfg.FileStoragePath
 		// Security: clean path and verify it stays within base directory
 		cleanPath := filepath.Clean(fp)
 		if strings.Contains(cleanPath, "..") || strings.HasPrefix(cleanPath, "/") && strings.Contains(cleanPath[1:], "..") {
 			c.JSON(http.StatusForbidden, gin.H{"error": "forbidden"})
 			return
 		}
-		fullPath := filepath.Join("/var/lib/cqa/files", cleanPath)
+		fullPath := filepath.Join(baseDir, cleanPath)
 		// Verify resolved path is within base directory
-		if !strings.HasPrefix(fullPath, "/var/lib/cqa/files") {
+		basePrefix := filepath.Clean(baseDir) + string(filepath.Separator)
+		cleanFullPath := filepath.Clean(fullPath)
+		if cleanFullPath != filepath.Clean(baseDir) && !strings.HasPrefix(cleanFullPath, basePrefix) {
 			c.JSON(http.StatusForbidden, gin.H{"error": "forbidden"})
 			return
 		}
@@ -71,7 +74,7 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 			c.JSON(http.StatusForbidden, gin.H{"error": "tenant_access_denied"})
 			return
 		}
-		c.File(fullPath)
+		c.File(cleanFullPath)
 	})
 
 	// CORS

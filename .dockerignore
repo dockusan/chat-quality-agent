@@ -1,0 +1,10 @@
+.git
+.github
+docs
+guidelines
+frontend/node_modules
+backend/.cache
+backend/tmp
+**/node_modules
+**/.DS_Store
+AGENTS.md

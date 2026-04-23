@@ -147,9 +147,14 @@ func CreateChannel(c *gin.Context) {
 		ExternalID:           externalID,
 		CredentialsEncrypted: credentialsToStore,
 		IsActive:             true,
-		Metadata:             func() string { if req.Metadata != "" { return req.Metadata }; return "{}" }(),
-		CreatedAt:            now,
-		UpdatedAt:            now,
+		Metadata: func() string {
+			if req.Metadata != "" {
+				return req.Metadata
+			}
+			return "{}"
+		}(),
+		CreatedAt: now,
+		UpdatedAt: now,
 	}
 
 	if err := db.DB.Create(&channel).Error; err != nil {
@@ -225,9 +230,10 @@ func DeleteChannel(c *gin.Context) {
 	var convIDs []string
 	db.DB.Model(&models.Conversation{}).Where("channel_id = ? AND tenant_id = ?", channelID, tenantID).Pluck("id", &convIDs)
 	if len(convIDs) > 0 {
+		baseDir := config.GetFileStoragePath()
 		// Delete local attachment files
 		for _, convID := range convIDs {
-			dir := filepath.Join("/var/lib/cqa/files", tenantID, convID)
+			dir := filepath.Join(baseDir, tenantID, convID)
 			os.RemoveAll(dir)
 		}
 		db.DB.Where("conversation_id IN ? AND tenant_id = ?", convIDs, tenantID).Delete(&models.Message{})
@@ -259,6 +265,7 @@ func PurgeChannelConversations(c *gin.Context) {
 
 	var messagesDeleted, convsDeleted int64
 	if len(convIDs) > 0 {
+		baseDir := config.GetFileStoragePath()
 		// Delete evaluation results linked to these conversations
 		db.DB.Where("conversation_id IN ? AND tenant_id = ?", convIDs, tenantID).Delete(&models.JobResult{})
 
@@ -268,7 +275,7 @@ func PurgeChannelConversations(c *gin.Context) {
 
 		// Delete local attachment files for each conversation
 		for _, convID := range convIDs {
-			dir := filepath.Join("/var/lib/cqa/files", tenantID, convID)
+			dir := filepath.Join(baseDir, tenantID, convID)
 			if err := os.RemoveAll(dir); err != nil {
 				log.Printf("[sync] failed to remove files dir %s: %v", dir, err)
 			}
@@ -435,7 +442,7 @@ type zaloTokenResponse struct {
 	AccessToken  string          `json:"access_token"`
 	RefreshToken string          `json:"refresh_token"`
 	ExpiresIn    json.RawMessage `json:"expires_in"` // Zalo returns string or int
-	Error        json.RawMessage `json:"error"`       // can be int or string
+	Error        json.RawMessage `json:"error"`      // can be int or string
 	Message      string          `json:"message"`
 }
 
@@ -514,8 +521,8 @@ func fetchZaloOAInfo(accessToken string) (*zaloOAInfo, error) {
 		Error   int    `json:"error"`
 		Message string `json:"message"`
 		Data    struct {
-			OAID   string `json:"oa_id"`
-			Name   string `json:"name"`
+			OAID string `json:"oa_id"`
+			Name string `json:"name"`
 		} `json:"data"`
 	}
 	if err := json.Unmarshal(body, &result); err != nil {

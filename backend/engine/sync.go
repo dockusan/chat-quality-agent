@@ -183,17 +183,17 @@ func (s *SyncEngine) upsertConversation(tenantID, channelID string, conv channel
 
 	// Create new
 	newConv := models.Conversation{
-		ID:                       pkg.NewUUID(),
-		TenantID:                 tenantID,
-		ChannelID:                channelID,
-		ExternalConversationID:   conv.ExternalID,
-		ExternalUserID:           conv.ExternalUserID,
-		CustomerName:             conv.CustomerName,
-		LastMessageAt:            &conv.LastMessageAt,
-		MessageCount:             0,
-		Metadata:                 string(metadataJSON),
-		CreatedAt:                time.Now(),
-		UpdatedAt:                time.Now(),
+		ID:                     pkg.NewUUID(),
+		TenantID:               tenantID,
+		ChannelID:              channelID,
+		ExternalConversationID: conv.ExternalID,
+		ExternalUserID:         conv.ExternalUserID,
+		CustomerName:           conv.CustomerName,
+		LastMessageAt:          &conv.LastMessageAt,
+		MessageCount:           0,
+		Metadata:               string(metadataJSON),
+		CreatedAt:              time.Now(),
+		UpdatedAt:              time.Now(),
 	}
 	if err := db.DB.Create(&newConv).Error; err != nil {
 		return "", err
@@ -264,12 +264,13 @@ func (s *SyncEngine) updateSyncStatus(channelID, status, errMsg string) error {
 
 // downloadAttachments downloads attachment files from URLs to local storage.
 func (s *SyncEngine) downloadAttachments(tenantID, convID string, msg *channels.SyncedMessage) {
+	baseDir := s.cfg.FileStoragePath
 	for i, att := range msg.Attachments {
 		if att.URL == "" {
 			continue
 		}
 		// Create directory
-		dir := filepath.Join("/var/lib/cqa/files", tenantID, convID)
+		dir := filepath.Join(baseDir, tenantID, convID)
 		if err := os.MkdirAll(dir, 0755); err != nil {
 			log.Printf("[sync] mkdir failed for %s: %v", dir, err)
 			continue

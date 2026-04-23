@@ -9,6 +9,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/vietbui/chat-quality-agent/api/middleware"
+	"github.com/vietbui/chat-quality-agent/config"
 	"github.com/vietbui/chat-quality-agent/db"
 	"github.com/vietbui/chat-quality-agent/db/models"
 	"github.com/vietbui/chat-quality-agent/pkg"
@@ -170,7 +171,7 @@ func DeleteTenant(c *gin.Context) {
 	// Full cascade delete: child → parent order
 
 	// 0. Delete all local attachment files for this tenant
-	os.RemoveAll(filepath.Join("/var/lib/cqa/files", tenantID))
+	os.RemoveAll(filepath.Join(config.GetFileStoragePath(), tenantID))
 
 	// 1. Messages (via conversations)
 	var convIDs []string
