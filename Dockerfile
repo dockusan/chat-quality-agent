@@ -2,8 +2,7 @@
 FROM node:20-alpine AS frontend-builder
 WORKDIR /app/frontend
 COPY frontend/package.json frontend/package-lock.json ./
-RUN --mount=type=cache,id=frontend-npm-cache,target=/root/.npm \
-    npm ci
+RUN npm ci
 COPY frontend/ ./
 RUN npm run build
 
@@ -11,13 +10,10 @@ RUN npm run build
 FROM golang:1.25-alpine AS backend-builder
 WORKDIR /app/backend
 COPY backend/go.mod backend/go.sum ./
-RUN --mount=type=cache,id=backend-go-mod-cache,target=/go/pkg/mod \
-    go mod download
+RUN go mod download
 COPY backend/ ./
 ARG VERSION=dev
-RUN --mount=type=cache,id=backend-go-mod-cache,target=/go/pkg/mod \
-    --mount=type=cache,id=backend-go-build-cache,target=/root/.cache/go-build \
-    CGO_ENABLED=0 go build -ldflags="-s -w -X main.version=${VERSION}" -o /cqa-server .
+RUN CGO_ENABLED=0 go build -ldflags="-s -w -X main.version=${VERSION}" -o /cqa-server .
 
 # Stage 3: Production image
 FROM alpine:3.21
