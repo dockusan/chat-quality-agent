@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -40,15 +41,18 @@ type Config struct {
 }
 
 func Load() (*Config, error) {
+	dbURL := getEnvFirst([]string{"DATABASE_URL", "MYSQL_URL"}, "")
+	dbURLCfg := parseDatabaseURL(dbURL)
+
 	cfg := &Config{
 		ServerPort:       getEnvFirst([]string{"SERVER_PORT", "PORT"}, "8080"),
 		ServerHost:       getEnv("SERVER_HOST", "0.0.0.0"),
 		AppURL:           GetAppURL(),
-		DBHost:           getEnvFirst([]string{"DB_HOST", "MYSQLHOST"}, "localhost"),
-		DBPort:           getEnvFirst([]string{"DB_PORT", "MYSQLPORT"}, "3306"),
-		DBUser:           getEnvFirst([]string{"DB_USER", "MYSQLUSER"}, "cqa"),
-		DBPassword:       getEnvFirst([]string{"DB_PASSWORD", "MYSQLPASSWORD"}, ""),
-		DBName:           getEnvFirst([]string{"DB_NAME", "MYSQLDATABASE"}, "cqa"),
+		DBHost:           getEnvFirst([]string{"DB_HOST", "MYSQLHOST"}, firstNonEmpty(dbURLCfg.host, "localhost")),
+		DBPort:           getEnvFirst([]string{"DB_PORT", "MYSQLPORT"}, firstNonEmpty(dbURLCfg.port, "3306")),
+		DBUser:           getEnvFirst([]string{"DB_USER", "MYSQLUSER"}, firstNonEmpty(dbURLCfg.user, "cqa")),
+		DBPassword:       getEnvFirst([]string{"DB_PASSWORD", "MYSQLPASSWORD"}, dbURLCfg.password),
+		DBName:           getEnvFirst([]string{"DB_NAME", "MYSQLDATABASE"}, firstNonEmpty(dbURLCfg.name, "cqa")),
 		JWTSecret:        getEnv("JWT_SECRET", ""),
 		EncryptionKey:    getEnv("ENCRYPTION_KEY", ""),
 		RateLimitPerIP:   getEnvInt("RATE_LIMIT_PER_IP", 500),
@@ -113,6 +117,45 @@ func getEnvInt(key string, fallback int) int {
 		}
 	}
 	return fallback
+}
+
+type databaseURLConfig struct {
+	host     string
+	port     string
+	user     string
+	password string
+	name     string
+}
+
+func parseDatabaseURL(raw string) databaseURLConfig {
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		return databaseURLConfig{}
+	}
+
+	u, err := url.Parse(raw)
+	if err != nil {
+		return databaseURLConfig{}
+	}
+
+	password, _ := u.User.Password()
+	cfg := databaseURLConfig{
+		host:     u.Hostname(),
+		port:     u.Port(),
+		user:     u.User.Username(),
+		password: password,
+		name:     strings.TrimPrefix(u.Path, "/"),
+	}
+	return cfg
+}
+
+func firstNonEmpty(values ...string) string {
+	for _, value := range values {
+		if strings.TrimSpace(value) != "" {
+			return value
+		}
+	}
+	return ""
 }
 
 func GetAppURL() string {

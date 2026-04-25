@@ -72,6 +72,8 @@ func TestDSN(t *testing.T) {
 }
 
 func TestLoadConfigSupportsRailwayEnv(t *testing.T) {
+	os.Unsetenv("DATABASE_URL")
+	os.Unsetenv("MYSQL_URL")
 	os.Unsetenv("DB_HOST")
 	os.Unsetenv("DB_PORT")
 	os.Unsetenv("DB_USER")
@@ -117,6 +119,49 @@ func TestLoadConfigSupportsRailwayEnv(t *testing.T) {
 	}
 	if cfg.FileStoragePath != "/data" {
 		t.Errorf("FileStoragePath = %q, want %q", cfg.FileStoragePath, "/data")
+	}
+}
+
+func TestLoadConfigSupportsDatabaseURL(t *testing.T) {
+	os.Unsetenv("DB_HOST")
+	os.Unsetenv("DB_PORT")
+	os.Unsetenv("DB_USER")
+	os.Unsetenv("DB_PASSWORD")
+	os.Unsetenv("DB_NAME")
+	os.Unsetenv("MYSQLHOST")
+	os.Unsetenv("MYSQLPORT")
+	os.Unsetenv("MYSQLUSER")
+	os.Unsetenv("MYSQLPASSWORD")
+	os.Unsetenv("MYSQLDATABASE")
+
+	os.Setenv("DATABASE_URL", "mysql://url-user:url-pass@mysql.railway.internal:3306/railway")
+	os.Setenv("JWT_SECRET", "test-jwt-secret-at-least-32-chars-long")
+	os.Setenv("ENCRYPTION_KEY", "12345678901234567890123456789012")
+	defer func() {
+		os.Unsetenv("DATABASE_URL")
+		os.Unsetenv("JWT_SECRET")
+		os.Unsetenv("ENCRYPTION_KEY")
+	}()
+
+	cfg, err := Load()
+	if err != nil {
+		t.Fatalf("Load failed: %v", err)
+	}
+
+	if cfg.DBHost != "mysql.railway.internal" {
+		t.Errorf("DBHost = %q, want %q", cfg.DBHost, "mysql.railway.internal")
+	}
+	if cfg.DBPort != "3306" {
+		t.Errorf("DBPort = %q, want %q", cfg.DBPort, "3306")
+	}
+	if cfg.DBUser != "url-user" {
+		t.Errorf("DBUser = %q, want %q", cfg.DBUser, "url-user")
+	}
+	if cfg.DBPassword != "url-pass" {
+		t.Errorf("DBPassword = %q, want %q", cfg.DBPassword, "url-pass")
+	}
+	if cfg.DBName != "railway" {
+		t.Errorf("DBName = %q, want %q", cfg.DBName, "railway")
 	}
 }
 
