@@ -6,17 +6,17 @@
 
 Hiện tại hỗ trợ **Zalo OA** và **Facebook Messenger**. Các kênh khác (Viber, Shopee Chat...) sẽ được bổ sung trong tương lai.
 
-### Nên dùng Claude hay Gemini?
+### Nên dùng Claude, Gemini hay OpenAI/GPT?
 
-| Tiêu chí | Claude | Gemini |
-|----------|--------|--------|
-| Chất lượng tiếng Việt | Tốt hơn | Khá |
-| Chi phí | Cao hơn | Rẻ hơn nhiều |
-| Tốc độ | Nhanh | Nhanh hơn |
-| Khuyến nghị QC | Sonnet 4.6 | Pro 2.5 |
-| Khuyến nghị Phân loại | Haiku 4.5 | Flash 2.0 |
+| Tiêu chí | Claude | Gemini | OpenAI / GPT |
+|----------|--------|--------|---------------|
+| Chất lượng tiếng Việt | Tốt hơn | Khá | Tốt |
+| Chi phí | Cao hơn | Rẻ hơn nhiều | Tùy model |
+| Tốc độ | Nhanh | Nhanh hơn | Tùy model |
+| Khuyến nghị QC | Sonnet 4.6 | Pro 2.5 | GPT-5 Mini / GPT-5 |
+| Khuyến nghị Phân loại | Haiku 4.5 | Flash 2.0 | GPT-4.1 Mini / GPT-5 Mini |
 
-**Kết luận**: Claude cho đánh giá QC chính xác hơn. Gemini cho phân loại đơn giản và tiết kiệm.
+**Kết luận**: Claude vẫn mạnh cho QC tiếng Việt. Gemini phù hợp khi ưu tiên chi phí. OpenAI/GPT phù hợp nếu bạn đã có sẵn OpenAI API key hoặc cần hệ sinh thái OpenAI-compatible.
 
 ### Batch mode là gì? Có nên bật không?
 

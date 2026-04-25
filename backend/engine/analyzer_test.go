@@ -23,11 +23,11 @@ func (m *MockAIProvider) AnalyzeChat(ctx context.Context, systemPrompt string, c
 
 func TestMockAIProviderQCPass(t *testing.T) {
 	passResponse := map[string]interface{}{
-		"verdict": "PASS",
-		"score":   90,
-		"review":  "Cuộc chat tốt, nhân viên lịch sự và giải đáp đầy đủ.",
+		"verdict":    "PASS",
+		"score":      90,
+		"review":     "Cuộc chat tốt, nhân viên lịch sự và giải đáp đầy đủ.",
 		"violations": []interface{}{},
-		"summary": "Khách hàng hỏi về sản phẩm, nhân viên trả lời chi tiết.",
+		"summary":    "Khách hàng hỏi về sản phẩm, nhân viên trả lời chi tiết.",
 	}
 	respJSON, _ := json.Marshal(passResponse)
 
@@ -139,6 +139,7 @@ func TestCalculateCostUSD(t *testing.T) {
 		{"claude sonnet small", "claude", "claude-sonnet-4-6", 1000, 500, 0.01, 0.02},
 		{"claude haiku cheap", "claude", "claude-haiku-3-5", 1000, 500, 0.001, 0.005},
 		{"gemini flash very cheap", "gemini", "gemini-2.0-flash", 1000, 500, 0.0001, 0.001},
+		{"openai gpt-5-mini", "openai", "gpt-5-mini", 1000, 500, 0.001, 0.002},
 		{"zero tokens", "claude", "claude-sonnet-4-6", 0, 0, 0, 0},
 	}
 

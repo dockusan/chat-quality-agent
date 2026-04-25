@@ -14,6 +14,7 @@ Vào menu **Cài đặt** > tab **Cấu hình AI**.
 |----------|---------|------------|
 | **Claude** (Anthropic) | Phân tích tiếng Việt tốt, chính xác cao | Giá cao hơn Gemini |
 | **Gemini** (Google) | Giá rẻ, tốc độ nhanh | Độ chính xác thấp hơn Claude |
+| **OpenAI / Codex / GPT** | Model GPT phổ biến, dễ tích hợp qua API chuẩn | Chi phí tùy model, cần chọn model phù hợp |
 
 ### Bước 2: Chọn Model
 
@@ -30,12 +31,31 @@ Vào menu **Cài đặt** > tab **Cấu hình AI**.
 | Gemini 2.0 Flash | Nhanh, rẻ | Phân loại đơn giản |
 | Gemini 2.5 Pro | Mạnh hơn | Phân tích chi tiết |
 
+**OpenAI / Codex / GPT:**
+| Model | Đặc điểm | Phù hợp |
+|-------|----------|---------|
+| GPT-5 Mini | Cân bằng chất lượng và chi phí | Khuyến nghị cho bắt đầu |
+| GPT-5 | Mạnh hơn | Phân tích phức tạp hơn |
+| GPT-4.1 | Ổn định, quen thuộc | Hệ thống cần model GPT đời trước |
+| GPT-4.1 Mini | Rẻ hơn | Phân loại hoặc workload nhẹ |
+
 ### Bước 3: Nhập API Key
 
 - **Claude**: Lấy key tại [console.anthropic.com/settings/keys](https://console.anthropic.com/settings/keys)
 - **Gemini**: Lấy key tại [aistudio.google.com/apikey](https://aistudio.google.com/apikey)
+- **OpenAI / Codex / GPT**: Lấy key tại [platform.openai.com/api-keys](https://platform.openai.com/api-keys)
 
-Nhập key vào ô **API Key**, bấm **Test API Key** — nếu hiện tick xanh "Kết nối thành công" là OK.
+Nhập key vào ô **API Key**, bấm **Test API Key**. Hệ thống sẽ gọi thử provider thật; nếu kết nối được sẽ báo thành công.
+
+### Base URL (tùy chọn)
+
+Bạn chỉ cần bật **Tùy chỉnh API URL** khi:
+
+- đi qua proxy như LiteLLM / OpenRouter
+- dùng OpenAI-compatible gateway riêng
+- cần route request qua endpoint nội bộ
+
+Nếu không có nhu cầu này, để trống để dùng endpoint mặc định của provider.
 
 Bấm **Lưu cấu hình**.
 

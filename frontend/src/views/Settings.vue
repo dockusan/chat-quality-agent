@@ -31,7 +31,7 @@
           <v-select
             v-model="aiSettings.provider"
             :label="$t('ai_provider')"
-            :items="[{ title: 'Claude (Anthropic)', value: 'claude' }, { title: 'Gemini (Google)', value: 'gemini' }]"
+            :items="providerOptions"
             class="mb-3"
             @update:model-value="onProviderChange"
           />
@@ -66,7 +66,7 @@
             v-if="useCustomBaseUrl"
             v-model="aiSettings.baseUrl"
             label="Base URL"
-            :placeholder="aiSettings.provider === 'claude' ? 'https://api.anthropic.com' : 'https://generativelanguage.googleapis.com'"
+            :placeholder="baseURLPlaceholder"
             hint="Để trống để dùng mặc định"
             persistent-hint
             clearable
@@ -188,6 +188,12 @@ const tabs = [
   { label: 'general', value: 'general', icon: 'mdi-cog' },
 ]
 
+const providerOptions = [
+  { title: 'Claude (Anthropic)', value: 'claude' },
+  { title: 'Gemini (Google)', value: 'gemini' },
+  { title: 'OpenAI / Codex / GPT', value: 'openai' },
+]
+
 const claudeModels = [
   { title: 'Claude Sonnet 4.6 (Recommended)', value: 'claude-sonnet-4-6' },
   { title: 'Claude Haiku 4.5 (Fast & Cheap)', value: 'claude-haiku-4-5-20251001' },
@@ -200,6 +206,12 @@ const geminiModels = [
   { title: 'Gemini 2.5 Flash Lite (Fastest)', value: 'gemini-2.5-flash-lite' },
   { title: 'Gemini 2.5 Pro (Most Capable)', value: 'gemini-2.5-pro' },
 ]
+const openAIModels = [
+  { title: 'GPT-5 Mini (Recommended)', value: 'gpt-5-mini' },
+  { title: 'GPT-5', value: 'gpt-5' },
+  { title: 'GPT-4.1', value: 'gpt-4.1' },
+  { title: 'GPT-4.1 Mini', value: 'gpt-4.1-mini' },
+]
 
 const useCustomBaseUrl = ref(false)
 const aiSettings = reactive({ provider: 'claude', model: 'claude-sonnet-4-6', apiKey: '', baseUrl: '', batchMode: true, batchSize: 5 })
@@ -211,13 +223,23 @@ const appUrlRules = [
 ]
 
 const modelOptions = computed(() => {
-  return aiSettings.provider === 'claude' ? claudeModels : geminiModels
+  if (aiSettings.provider === 'claude') return claudeModels
+  if (aiSettings.provider === 'gemini') return geminiModels
+  return openAIModels
 })
 
 function onProviderChange() {
   // Reset to default model when switching provider
-  aiSettings.model = aiSettings.provider === 'claude' ? 'claude-sonnet-4-6' : 'gemini-2.5-flash'
+  if (aiSettings.provider === 'claude') aiSettings.model = 'claude-sonnet-4-6'
+  else if (aiSettings.provider === 'gemini') aiSettings.model = 'gemini-2.5-flash'
+  else aiSettings.model = 'gpt-5-mini'
 }
+
+const baseURLPlaceholder = computed(() => {
+  if (aiSettings.provider === 'claude') return 'https://api.anthropic.com'
+  if (aiSettings.provider === 'gemini') return 'https://generativelanguage.googleapis.com'
+  return 'https://api.openai.com/v1'
+})
 
 async function loadSettings() {
   try {

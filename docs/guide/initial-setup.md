@@ -48,10 +48,12 @@ Bấm **Lưu cấu hình**.
 Vào menu **Cài đặt** > tab **Cấu hình AI**:
 
 1. **Chọn AI Provider**: Claude (Anthropic) hoặc Gemini (Google)
+   - Hoặc OpenAI / Codex / GPT nếu bạn dùng OpenAI API key
 2. **Chọn Model**:
    - Claude: Sonnet 4.6 (khuyến nghị), Haiku 4.5 (rẻ), Opus 4 (mạnh nhất)
    - Gemini: Flash 2.0 (rẻ), Pro 2.5 (mạnh)
-3. **Nhập API Key**: Lấy từ [console.anthropic.com](https://console.anthropic.com) (Claude) hoặc [aistudio.google.com](https://aistudio.google.com) (Gemini)
+   - OpenAI: GPT-5 Mini (khuyến nghị), GPT-5, GPT-4.1, GPT-4.1 Mini
+3. **Nhập API Key**: Lấy từ [console.anthropic.com](https://console.anthropic.com) (Claude), [aistudio.google.com](https://aistudio.google.com) (Gemini), hoặc [platform.openai.com/api-keys](https://platform.openai.com/api-keys) (OpenAI)
 4. Bấm **Test API Key** để kiểm tra — nếu hiện tick xanh là OK
 5. Bấm **Lưu cấu hình**
 
@@ -79,5 +81,5 @@ Cài đặt → Tạo admin → Tạo công ty → Cấu hình chung → Cấu h
 
 ## Bước tiếp theo
 
-- [Cấu hình AI chi tiết](/usage/ai-settings) — So sánh Claude vs Gemini, Batch mode
+- [Cấu hình AI chi tiết](/usage/ai-settings) — So sánh Claude, Gemini, OpenAI/GPT, Batch mode
 - [Kết nối kênh chat](/usage/channels) — Hướng dẫn kết nối Zalo OA, Facebook

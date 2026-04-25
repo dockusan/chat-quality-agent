@@ -1,12 +1,14 @@
 package handlers
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/vietbui/chat-quality-agent/ai"
 	"github.com/vietbui/chat-quality-agent/api/middleware"
 	"github.com/vietbui/chat-quality-agent/config"
 	"github.com/vietbui/chat-quality-agent/db"
@@ -59,7 +61,7 @@ func getSettingValue(settings []models.AppSetting, key, defaultVal string) strin
 func SaveAISettings(c *gin.Context) {
 	tenantID := middleware.GetTenantID(c)
 	var req struct {
-		Provider  string `json:"provider" binding:"required,oneof=claude gemini"`
+		Provider  string `json:"provider" binding:"required,oneof=claude gemini openai"`
 		APIKey    string `json:"api_key" binding:"required"`
 		Model     string `json:"model"`
 		BaseURL   string `json:"base_url"`
@@ -153,21 +155,54 @@ func TestAIKey(c *gin.Context) {
 		provider = providerSetting.ValuePlain
 	}
 
-	_ = apiKey
-	_ = provider
-	// TODO: Actually test the API key by calling the provider
-	c.JSON(http.StatusOK, gin.H{"status": "ok", "provider": provider, "message": "API key configured"})
+	var modelSetting models.AppSetting
+	model := ""
+	if err := db.DB.Where("tenant_id = ? AND setting_key = ?", tenantID, "ai_model").First(&modelSetting).Error; err == nil {
+		model = modelSetting.ValuePlain
+	}
+
+	var baseURLSetting models.AppSetting
+	baseURL := ""
+	if err := db.DB.Where("tenant_id = ? AND setting_key = ?", tenantID, "ai_base_url").First(&baseURLSetting).Error; err == nil {
+		baseURL = baseURLSetting.ValuePlain
+	}
+
+	var providerClient interface {
+		AnalyzeChat(ctx context.Context, systemPrompt string, chatTranscript string) (ai.AIResponse, error)
+	}
+	switch provider {
+	case "claude":
+		providerClient = ai.NewClaudeProvider(string(apiKey), model, cfg.AIMaxTokens, baseURL)
+	case "gemini":
+		providerClient = ai.NewGeminiProvider(string(apiKey), model, baseURL)
+	case "openai":
+		providerClient = ai.NewOpenAIProvider(string(apiKey), model, cfg.AIMaxTokens, baseURL)
+	default:
+		c.JSON(http.StatusBadRequest, gin.H{"error": "unsupported_provider"})
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 30*time.Second)
+	defer cancel()
+
+	resp, err := providerClient.AnalyzeChat(ctx, "Reply with exactly: OK", "Test connectivity.")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"status": "ok", "provider": provider, "model": resp.Model, "message": "API key hoạt động"})
 }
 
 // SaveGeneralSettings saves general tenant settings
 func SaveGeneralSettings(c *gin.Context) {
 	tenantID := middleware.GetTenantID(c)
 	var req struct {
-		CompanyName    string  `json:"company_name"`
-		Timezone       string  `json:"timezone"`
-		Language       string  `json:"language"`
-		ExchangeRate   float64 `json:"exchange_rate_vnd"`
-		AppURL         string  `json:"app_url"`
+		CompanyName  string  `json:"company_name"`
+		Timezone     string  `json:"timezone"`
+		Language     string  `json:"language"`
+		ExchangeRate float64 `json:"exchange_rate_vnd"`
+		AppURL       string  `json:"app_url"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid_request", "details": err.Error()})
@@ -299,7 +334,7 @@ func upsertSetting(tenantID, key, plainValue string, encryptedValue []byte) {
 		setting := models.AppSetting{
 			ID:             pkg.NewUUID(),
 			TenantID:       tenantID,
-			SettingKey:      key,
+			SettingKey:     key,
 			ValuePlain:     plainValue,
 			ValueEncrypted: encryptedValue,
 			CreatedAt:      time.Now(),

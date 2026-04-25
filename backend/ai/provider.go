@@ -8,7 +8,7 @@ type AIResponse struct {
 	InputTokens  int
 	OutputTokens int
 	Model        string
-	Provider     string // "claude" or "gemini"
+	Provider     string // "claude", "gemini", or "openai"
 }
 
 // BatchItem represents one conversation in a batch request.
@@ -51,6 +51,19 @@ func CalculateCostUSD(provider, model string, inputTokens, outputTokens int) flo
 			inputRate, outputRate = 1.25, 10.00
 		default:
 			inputRate, outputRate = 0.075, 0.30 // default flash pricing
+		}
+	case "openai":
+		switch model {
+		case "gpt-5":
+			inputRate, outputRate = 1.25, 10.00
+		case "gpt-5-mini":
+			inputRate, outputRate = 0.25, 2.00
+		case "gpt-4.1":
+			inputRate, outputRate = 2.00, 8.00
+		case "gpt-4.1-mini":
+			inputRate, outputRate = 0.40, 1.60
+		default:
+			inputRate, outputRate = 0.25, 2.00 // default gpt-5-mini pricing
 		}
 	default:
 		return 0
