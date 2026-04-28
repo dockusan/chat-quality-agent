@@ -62,7 +62,7 @@ func SaveAISettings(c *gin.Context) {
 	tenantID := middleware.GetTenantID(c)
 	var req struct {
 		Provider  string `json:"provider" binding:"required,oneof=claude gemini openai"`
-		APIKey    string `json:"api_key" binding:"required"`
+		APIKey    string `json:"api_key"`
 		Model     string `json:"model"`
 		BaseURL   string `json:"base_url"`
 		BatchMode string `json:"batch_mode"`
@@ -91,13 +91,21 @@ func SaveAISettings(c *gin.Context) {
 		db.DB.Where("tenant_id = ? AND setting_key = ?", tenantID, "ai_base_url").Delete(&models.AppSetting{})
 	}
 
-	// Save API key (encrypted)
-	encrypted, err := pkg.Encrypt([]byte(req.APIKey), cfg.EncryptionKey)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "encryption_failed"})
-		return
+	// Save API key (encrypted), or keep the existing key when the UI sends the masked value.
+	if req.APIKey != "" && req.APIKey != "••••••••" {
+		encrypted, err := pkg.Encrypt([]byte(req.APIKey), cfg.EncryptionKey)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "encryption_failed"})
+			return
+		}
+		upsertSetting(tenantID, "ai_api_key", "", encrypted)
+	} else {
+		var existing models.AppSetting
+		if err := db.DB.Where("tenant_id = ? AND setting_key = ?", tenantID, "ai_api_key").First(&existing).Error; err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "no_api_key_configured"})
+			return
+		}
 	}
-	upsertSetting(tenantID, "ai_api_key", "", encrypted)
 
 	// Save batch settings
 	if req.BatchMode != "" {
@@ -192,6 +200,52 @@ func TestAIKey(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"status": "ok", "provider": provider, "model": resp.Model, "message": "API key hoạt động"})
+}
+
+// ListAIModels fetches available models from an OpenAI-compatible provider.
+func ListAIModels(c *gin.Context) {
+	tenantID := middleware.GetTenantID(c)
+	cfg, _ := config.Load()
+
+	var req struct {
+		Provider string `json:"provider" binding:"required"`
+		APIKey   string `json:"api_key"`
+		BaseURL  string `json:"base_url"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid_request", "details": err.Error()})
+		return
+	}
+	if req.Provider != "openai" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "model_discovery_not_supported"})
+		return
+	}
+
+	apiKey := req.APIKey
+	if apiKey == "" || apiKey == "••••••••" {
+		var setting models.AppSetting
+		if err := db.DB.Where("tenant_id = ? AND setting_key = ?", tenantID, "ai_api_key").First(&setting).Error; err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "no_api_key_configured"})
+			return
+		}
+		decrypted, err := pkg.Decrypt(setting.ValueEncrypted, cfg.EncryptionKey)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "decrypt_failed"})
+			return
+		}
+		apiKey = string(decrypted)
+	}
+
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 30*time.Second)
+	defer cancel()
+
+	models, err := ai.FetchOpenAIModels(ctx, apiKey, req.BaseURL)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"models": models})
 }
 
 // SaveGeneralSettings saves general tenant settings

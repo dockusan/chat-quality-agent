@@ -195,6 +195,7 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 			tenant.PUT("/settings", middleware.RequirePermission("settings", "w"), handlers.SaveSetting)
 			tenant.PUT("/settings/ai", middleware.RequirePermission("settings", "w"), handlers.SaveAISettings)
 			tenant.PUT("/settings/analysis", middleware.RequirePermission("settings", "w"), handlers.SaveAnalysisSettings)
+			tenant.POST("/settings/ai/models", middleware.RequirePermission("settings", "w"), handlers.ListAIModels)
 			tenant.POST("/settings/ai/test", middleware.RequirePermission("settings", "w"), handlers.TestAIKey)
 			tenant.PUT("/settings/general", middleware.RequirePermission("settings", "w"), handlers.SaveGeneralSettings)
 			tenant.PUT("/settings/password", handlers.ChangePassword)

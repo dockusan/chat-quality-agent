@@ -34,7 +34,7 @@ func CalculateCostUSD(provider, model string, inputTokens, outputTokens int) flo
 	switch provider {
 	case "claude":
 		switch model {
-		case "claude-haiku-4-5-20251001", "claude-haiku-4-5":
+		case "claude-haiku-4-5-20251001", "claude-haiku-4-5", "claude-haiku-3-5":
 			inputRate, outputRate = 0.80, 4.00
 		case "claude-sonnet-4-6", "claude-sonnet-4-20250514", "claude-sonnet-4-5-20250929":
 			inputRate, outputRate = 3.00, 15.00

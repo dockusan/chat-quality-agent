@@ -36,12 +36,26 @@
             @update:model-value="onProviderChange"
           />
 
-          <v-select
-            v-model="aiSettings.model"
-            :label="$t('ai_model')"
-            :items="modelOptions"
-            class="mb-3"
-          />
+          <v-row dense align="start" class="mb-3">
+            <v-col>
+              <v-select
+                v-model="aiSettings.model"
+                :label="$t('ai_model')"
+                :items="modelOptions"
+                :loading="loadingModels"
+                hide-details="auto"
+              />
+            </v-col>
+            <v-col v-if="aiSettings.provider === 'openai'" cols="auto">
+              <v-btn
+                icon="mdi-refresh"
+                variant="outlined"
+                :loading="loadingModels"
+                title="Tải model khả dụng"
+                @click="fetchAIModels()"
+              />
+            </v-col>
+          </v-row>
 
           <v-text-field
             v-model="aiSettings.apiKey"
@@ -163,7 +177,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import api from '../api'
@@ -181,6 +195,7 @@ const snackColor = ref('success')
 const savingAI = ref(false)
 const testingKey = ref(false)
 const savingGeneral = ref(false)
+const loadingModels = ref(false)
 
 const tabs = [
   { label: 'ai_config', value: 'ai', icon: 'mdi-robot' },
@@ -212,6 +227,7 @@ const openAIModels = [
   { title: 'GPT-4.1', value: 'gpt-4.1' },
   { title: 'GPT-4.1 Mini', value: 'gpt-4.1-mini' },
 ]
+const fetchedOpenAIModels = ref<{ title: string; value: string }[]>([])
 
 const useCustomBaseUrl = ref(false)
 const aiSettings = reactive({ provider: 'claude', model: 'claude-sonnet-4-6', apiKey: '', baseUrl: '', batchMode: true, batchSize: 5 })
@@ -225,7 +241,7 @@ const appUrlRules = [
 const modelOptions = computed(() => {
   if (aiSettings.provider === 'claude') return claudeModels
   if (aiSettings.provider === 'gemini') return geminiModels
-  return openAIModels
+  return fetchedOpenAIModels.value.length > 0 ? fetchedOpenAIModels.value : openAIModels
 })
 
 function onProviderChange() {
@@ -233,7 +249,12 @@ function onProviderChange() {
   if (aiSettings.provider === 'claude') aiSettings.model = 'claude-sonnet-4-6'
   else if (aiSettings.provider === 'gemini') aiSettings.model = 'gemini-2.5-flash'
   else aiSettings.model = 'gpt-5-mini'
+  fetchedOpenAIModels.value = []
 }
+
+watch([() => aiSettings.baseUrl, useCustomBaseUrl], () => {
+  fetchedOpenAIModels.value = []
+})
 
 const baseURLPlaceholder = computed(() => {
   if (aiSettings.provider === 'claude') return 'https://api.anthropic.com'
@@ -265,6 +286,49 @@ async function loadSettings() {
   }
 }
 
+async function fetchAIModels(showMessage = true) {
+  if (aiSettings.provider !== 'openai') return
+  if (!aiSettings.apiKey) {
+    if (showMessage) showSnack('Vui lòng nhập API Key trước khi tải model', 'error')
+    return
+  }
+  if (useCustomBaseUrl.value && !aiSettings.baseUrl) {
+    if (showMessage) showSnack('Vui lòng nhập Base URL hoặc tắt tùy chỉnh', 'error')
+    return
+  }
+
+  loadingModels.value = true
+  try {
+    const { data } = await api.post(`/tenants/${tenantId.value}/settings/ai/models`, {
+      provider: aiSettings.provider,
+      api_key: aiSettings.apiKey,
+      base_url: useCustomBaseUrl.value ? (aiSettings.baseUrl || '') : '',
+    })
+    const models = Array.isArray(data.models) ? data.models : []
+    fetchedOpenAIModels.value = models.map((model: string) => ({ title: model, value: model }))
+
+    const compatibleModel = pickCompatibleModel(aiSettings.model, models)
+    if (compatibleModel) {
+      aiSettings.model = compatibleModel
+    } else if (models.length > 0) {
+      aiSettings.model = models[0]
+    }
+
+    if (showMessage) showSnack(`Đã tải ${models.length} model`, 'success')
+  } catch (err: any) {
+    if (showMessage) showSnack(err.response?.data?.error || t('error'), 'error')
+  } finally {
+    loadingModels.value = false
+  }
+}
+
+function pickCompatibleModel(requested: string, models: string[]) {
+  if (!requested) return ''
+  const exact = models.find(model => model === requested)
+  if (exact) return exact
+  return models.find(model => model.endsWith(`/${requested}`) || model.endsWith(`:${requested}`)) || ''
+}
+
 const savingAnalysis = ref(false)
 
 async function saveAnalysis() {
@@ -283,7 +347,7 @@ async function saveAnalysis() {
 }
 
 async function saveAI() {
-  if (!aiSettings.apiKey || aiSettings.apiKey === '••••••••') {
+  if (!aiSettings.apiKey) {
     showSnack('Vui lòng nhập API Key', 'error')
     return
   }
@@ -345,5 +409,10 @@ function showSnack(text: string, color: string) {
   snackbar.value = true
 }
 
-onMounted(loadSettings)
+onMounted(async () => {
+  await loadSettings()
+  if (aiSettings.provider === 'openai' && aiSettings.apiKey) {
+    await fetchAIModels(false)
+  }
+})
 </script>
